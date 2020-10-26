@@ -7,8 +7,8 @@ import cats.effect.IO
 import cats.implicits._
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import pureconfig.ConfigSource
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, SparkSession}
-import com.backwards.spark.Odd._
 import com.backwards.text.Text._
 
 /**
@@ -17,7 +17,7 @@ import com.backwards.text.Text._
  *  sbt '; set javaOptions ++= Seq("-Dspark.master=local[*]"); runMain com.backwards.spark.OddInstancesApp'
  * }}}
  */
-object OddInstancesApp extends PureConfig {
+object OddInstancesBetterApp extends PureConfig {
   def sparkSession(b: SparkSession.Builder, config: Config): Throwable Either SparkSession =
     Try(config.master.fold(b)(b.master).getOrCreate()).toEither
 
@@ -40,18 +40,13 @@ object OddInstancesApp extends PureConfig {
   def run(spark: SparkSession): IO[Unit] = IO {
     import spark.implicits._
 
-    val dataFrame: Dataset[(Int, Int)] =
-      spark.read
-        .option("inferSchema", "true")
-        .option("header", "true")
-        .csv("data/in/input.csv")
-        .as[(Int, Int)]
+    val rdd: RDD[(Int, Int)] = spark.read
+      .option("inferSchema", "true")
+      .option("header", "true")
+      .csv("data/in/input.csv").as[(Int, Int)]
+      .rdd
+      .reduceByKey(_ ^ _)
 
-    val result: Dataset[Map[Int, Option[Int]]] =
-      dataFrame.groupByKey(_._1).mapGroups { case (_, values) =>
-        oddInstances(values.toList)
-      }
-
-    result.map(_.mkString).write.csv("data/out/output.csv")
+    println(rdd.collect().mkString(", "))
   }
 }

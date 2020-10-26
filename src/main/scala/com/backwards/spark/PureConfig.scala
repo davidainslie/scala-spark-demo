@@ -5,7 +5,7 @@ import pureconfig._
 import pureconfig.generic.ExportMacros
 
 /**
- * Copy and paster from PureConfig - Silly Intellij can optimise imports and remove this dependency when it is actually used.
+ * Copy and paste from PureConfig - Silly Intellij can optimise imports and remove this dependency when it is actually used.
  * An object that, when imported, provides implicit `ConfigReader` and `ConfigWriter` instances for value classes, tuples, case classes and sealed traits.
  */
 object PureConfig extends PureConfig
